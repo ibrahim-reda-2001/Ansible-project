@@ -1,0 +1,42 @@
+---
+- name: Deploy Nginx
+  hosts: my_hosts
+  become: yes
+  vars:
+    nginx_server_name: mynginx.local
+    allowed_ips:
+      - 192.168.1.10
+      - 192.168.2.10
+      - 192.168.3.10
+
+  tasks:
+    - name: Update cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Deploy Nginx config template
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+        mode: '0644'
+        owner: root
+        group: root
+      notify: restart nginx
+
+    - name: Start Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+

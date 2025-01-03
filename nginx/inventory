@@ -1,0 +1,5 @@
+[my_hosts]
+remote_host1 ansible_host=54.227.15.48 ansible_user=ubuntu ansible_ssh_private_key_file=test.pem
+remote_host2 ansible_host=100.25.213.223 ansible_user=ubuntu ansible_ssh_private_key_file=test.pem
+remote_host3 ansible_host=23.22.160.32 ansible_user=ubuntu ansible_ssh_private_key_file=test.pem
+
