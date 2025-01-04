@@ -1,0 +1,6 @@
+---
+- name: nginx install
+  hosts: my_hosts
+  become: yes
+  roles:
+    - nginx-role
