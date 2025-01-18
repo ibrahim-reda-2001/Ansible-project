@@ -1,0 +1,34 @@
+---
+# tasks file for roles/common
+- name: update all packages
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+    update_cache: yes
+- name: install common packages
+  ansible.builtin.apt:
+    pkg: "{{ common_packages }}"  # you can passs list to pkg 
+    state: present
+- name: generate a local keypair
+  community.crypto.openssh_keypair:
+    path: "{{ item.key }}"
+  loop: "{{ users }}"
+  delegate_to: localhost
+  become: false    
+- name: add user to group
+  ansible.builtin.group:
+    name: "{{ item.group }}"
+    present: "{{ item.state }}"
+  loop: "{{ users }}" #that under group_vars
+- name: create new user 
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    group: "{{ item.group }}"
+    present: "{{ item.state }}"
+  loop: "{{ users }}"
+- name: copy public key to remote host
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ lookup( 'file', item.key + '.pup') }}"
+  loop: "{{ users }}"
+    

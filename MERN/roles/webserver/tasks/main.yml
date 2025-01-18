@@ -1,0 +1,56 @@
+---
+# tasks file for roles/webserver
+- name: Install Node.js and npm
+  ansible.builtin.apt:
+    pkg:
+      - nodejs
+      - npm
+    state: present
+
+- name: Create application directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ users[0].name }}"  # Select the first item in the list
+    group: "{{ users[0].group }}"  # Select the first group
+    mode: "0755"
+
+- name: install npm pakages
+  ansible.builtin.npm:
+    name: "{{ item }}"
+    global: yes
+  loop: "{{ npm_packages }}"
+- name: intialize a new react project
+  ansible.builtin.command:
+    cmd: " npx create-react-app {{ app_name }} "
+    chdir: "{{ app_dir }}"
+    # to avoid idempotens of ansible 
+    # it will skip this task if this file already exist
+  args:
+    creates: "{{ app_dir }}/{{ app_name }}"  
+- name: configure react development server to listen from 0.0.0.0
+  ansible.builtin.lineinfile:
+    path: "{{ app_dir }}/{{app_name}}.env"
+    line: "HOST=0.0.0.0"
+    create: yes
+- name: Deploy custom app.css
+  ansible.builtin.copy:
+    src: App.css
+    dest: "{{ app_dir }}/{{ app_name }}/src/App.css"
+    mode: "0644"
+  when: deploy_custom_page
+- name: deploy custom App.js
+  ansible.builtin.template:
+    src: App.js.j2
+    dest: "{{ app_dir }}/{{ app_name }}/src/App.js"
+    mode: "0644"
+    # to avoid confilct in J2 file replace {{vars }} with this start string because JS use {{}} 
+    # to define vars 
+    variable_start_string: "{[%" 
+    variable_end_string: "%]}"
+  when: deploy_custom_page #  i want to run this when this var is true 
+- name: start the development applocation (React)
+  ansible.builtin.command:
+    cmd: pm2 start npm -- start --watch 
+    chdir: "{{ app_dir }}/{{ app_name }}" 
+
